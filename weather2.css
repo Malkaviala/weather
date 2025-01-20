@@ -1,0 +1,404 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 30px;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 40px;
+    color: #2c3e50;
+}
+
+.header h1 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+    background: linear-gradient(45deg, #2c3e50, #3498db);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.dashboard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+.card {
+    background: white;
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    color: #2c3e50;
+}
+
+.card-header i {
+    font-size: 24px;
+    margin-right: 15px;
+    color: #3498db;
+}
+
+.card-title {
+    font-size: 1.2em;
+    font-weight: 600;
+}
+
+.temp-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 15px;
+}
+
+.temp-unit {
+    text-align: center;
+    flex: 1;
+}
+
+.temp-value {
+    font-size: 2.2em;
+    font-weight: bold;
+    color: #2c3e50;
+    margin: 5px 0;
+}
+
+.temp-label {
+    font-size: 0.9em;
+    color: #7f8c8d;
+}
+
+.divider {
+    width: 1px;
+    height: 50px;
+    background: #e0e0e0;
+    margin: 0 20px;
+}
+
+.humidity-value {
+    font-size: 2.8em;
+    font-weight: bold;
+    color: #2c3e50;
+    text-align: center;
+    margin: 10px 0;
+}
+
+.weather-info {
+    text-align: center;
+    margin-top: 15px;
+}
+
+.weather-description {
+    font-size: 1.2em;
+    color: #2c3e50;
+    margin: 10px 0;
+}
+
+.weather-icon {
+    font-size: 2.5em;
+    color: #3498db;
+    margin: 10px 0;
+}
+
+.time-location-info {
+    text-align: center;
+    padding: 10px;
+}
+
+.time-display {
+    font-size: 2.5em;
+    font-weight: bold;
+    color: #2c3e50;
+    margin: 5px 0;
+}
+
+.date-display {
+    font-size: 1.2em;
+    color: #7f8c8d;
+    margin-bottom: 15px;
+}
+
+.location-display {
+    font-size: 1.3em;
+    color: #2c3e50;
+    margin-top: 10px;
+}
+
+.location-display i {
+    color: #e74c3c;
+    margin-right: 8px;
+}
+
+.alert-content {
+    padding: 15px;
+    background-color: #fff3cd;
+    border-left: 4px solid #ffc107;
+    margin-top: 10px;
+    border-radius: 4px;
+    color: #856404;
+}
+
+.alert-content.severe {
+    background-color: #f8d7da;
+    border-left-color: #dc3545;
+    color: #721c24;
+}
+
+.alert-content.moderate {
+    background-color: #fff3cd;
+    border-left-color: #ffc107;
+    color: #856404;
+}
+
+.alert-content.minor {
+    background-color: #d4edda;
+    border-left-color: #28a745;
+    color: #155724;
+}
+
+.forecast-container {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+}
+
+.forecast-day {
+    text-align: center;
+    flex: 1;
+    padding: 10px;
+}
+
+.forecast-date {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.forecast-icon {
+    font-size: 1.5em;
+    margin: 5px 0;
+    color: #3498db;
+}
+
+.forecast-temp {
+    font-size: 1.1em;
+}
+
+.celestial-info {
+    text-align: center;
+    padding: 15px;
+}
+
+.sun-times {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 20px;
+}
+
+.celestial-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.celestial-item i {
+    color: #f39c12;
+}
+
+.moon-phase {
+    text-align: center;
+}
+
+.moon-icon {
+    font-size: 2em;
+    margin: 10px 0;
+    color: #34495e;
+}
+
+.aqi-container {
+    text-align: center;
+    padding: 15px;
+}
+
+.aqi-gauge {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: #f0f0f0;
+    margin: 0 auto 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border: 8px solid;
+}
+
+.gauge-value {
+    font-size: 2em;
+    font-weight: bold;
+}
+
+.gauge-label {
+    font-size: 0.9em;
+    color: #7f8c8d;
+}
+
+.aqi-description {
+    font-size: 1.1em;
+    color: #2c3e50;
+}
+
+.settings-container {
+    padding: 15px;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.setting-select {
+    padding: 5px 10px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    background: white;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+    background-color: #2196F3;
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(26px);
+}
+
+/* Dark mode styles */
+body.dark-mode {
+    background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+}
+
+.dark-mode .card {
+    background: #34495e;
+    color: #ecf0f1;
+}
+
+.dark-mode .card-title {
+    color: #ecf0f1;
+}
+
+.dark-mode .temp-value,
+.dark-mode .humidity-value {
+    color: #ecf0f1;
+}
+
+.dark-mode .temp-label {
+    color: #bdc3c7;
+}
+
+.dark-mode .status-bar {
+    background: #34495e;
+    color: #ecf0f1;
+}
+
+.status-bar {
+    background: white;
+    border-radius: 15px;
+    padding: 15px;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    margin-top: 20px;
+}
+
+.status-text {
+    color: #2c3e50;
+    font-size: 0.9em;
+}
+
+.timestamp {
+    color: #7f8c8d;
+    font-size: 0.85em;
+    margin-top: 5px;
+}
+
+.error-message {
+    background: #ff7675;
+    color: white;
+    padding: 15px;
+    border-radius: 15px;
+    margin-top: 20px;
+    text-align: center;
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+    
+    .dashboard {
+        grid-template-columns: 1fr;
+    }
+}
