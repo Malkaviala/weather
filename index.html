@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Environmental Monitor</title>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<style>
+/* Previous styles remain the same */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 30px;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 40px;
+    color: #2c3e50;
+}
+
+.header h1 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+    background: linear-gradient(45deg, #2c3e50, #3498db);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.dashboard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+.card {
+    background: white;
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    color: #2c3e50;
+}
+
+.card-header i {
+    font-size: 24px;
+    margin-right: 15px;
+    color: #3498db;
+}
+
+.card-title {
+    font-size: 1.2em;
+    font-weight: 600;
+}
+
+.temp-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 15px;
+}
+
+.temp-unit {
+    text-align: center;
+    flex: 1;
+}
+
+.temp-value {
+    font-size: 2.2em;
+    font-weight: bold;
+    color: #2c3e50;
+    margin: 5px 0;
+}
+
+.temp-label {
+    font-size: 0.9em;
+    color: #7f8c8d;
+}
+
+.divider {
+    width: 1px;
+    height: 50px;
+    background: #e0e0e0;
+    margin: 0 20px;
+}
+
+.humidity-value {
+    font-size: 2.8em;
+    font-weight: bold;
+    color: #2c3e50;
+    text-align: center;
+    margin: 10px 0;
+}
+
+.weather-info {
+    text-align: center;
+    margin-top: 15px;
+}
+
+.weather-description {
+    font-size: 1.2em;
+    color: #2c3e50;
+    margin: 10px 0;
+}
+
+.weather-icon {
+    font-size: 2.5em;
+    color: #3498db;
+    margin: 10px 0;
+}
+
+.time-location-info {
+    text-align: center;
+    padding: 10px;
+}
+
+.time-display {
+    font-size: 2.5em;
+    font-weight: bold;
+    color: #2c3e50;
+    margin: 5px 0;
+}
+
+.date-display {
+    font-size: 1.2em;
+    color: #7f8c8d;
+    margin-bottom: 15px;
+}
+
+.location-display {
+    font-size: 1.3em;
+    color: #2c3e50;
+    margin-top: 10px;
+}
+
+.location-display i {
+    color: #e74c3c;
+    margin-right: 8px;
+}
+
+.alert-content {
+    padding: 15px;
+    background-color: #fff3cd;
+    border-left: 4px solid #ffc107;
+    margin-top: 10px;
+    border-radius: 4px;
+    color: #856404;
+}
+
+.alert-content.severe {
+    background-color: #f8d7da;
+    border-left-color: #dc3545;
+    color: #721c24;
+}
+
+.alert-content.moderate {
+    background-color: #fff3cd;
+    border-left-color: #ffc107;
+    color: #856404;
+}
+
+.alert-content.minor {
+    background-color: #d4edda;
+    border-left-color: #28a745;
+    color: #155724;
+}
+
+.forecast-container {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+}
+
+.forecast-day {
+    text-align: center;
+    flex: 1;
+    padding: 10px;
+}
+
+.forecast-date {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.forecast-icon {
+    font-size: 1.5em;
+    margin: 5px 0;
+    color: #3498db;
+}
+
+.forecast-temp {
+    font-size: 1.1em;
+}
+
+.celestial-info {
+    text-align: center;
+    padding: 15px;
+}
+
+.sun-times {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 20px;
+}
+
+.celestial-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.celestial-item i {
+    color: #f39c12;
+}
+
+.moon-phase {
+    text-align: center;
+}
+
+.moon-icon {
+    font-size: 2em;
+    margin: 10px 0;
+    color: #34495e;
+}
+
+.aqi-container {
+    text-align: center;
+    padding: 15px;
+}
+
+.aqi-gauge {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: #f0f0f0;
+    margin: 0 auto 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border: 8px solid;
+}
+
+.gauge-value {
+    font-size: 2em;
+    font-weight: bold;
+}
+
+.gauge-label {
+    font-size: 0.9em;
+    color: #7f8c8d;
+}
+
+.aqi-description {
+    font-size: 1.1em;
+    color: #2c3e50;
+}
+
+.settings-container {
+    padding: 15px;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.setting-select {
+    padding: 5px 10px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    background: white;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+    background-color: #2196F3;
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(26px);
+}
+
+/* Dark mode styles */
+body.dark-mode {
+    background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+}
+
+.dark-mode .card {
+    background: #34495e;
+    color: #ecf0f1;
+}
+
+.dark-mode .card-title {
+    color: #ecf0f1;
+}
+
+.dark-mode .temp-value,
+.dark-mode .humidity-value {
+    color: #ecf0f1;
+}
+
+.dark-mode .temp-label {
+    color: #bdc3c7;
+}
+
+.dark-mode .status-bar {
+    background: #34495e;
+    color: #ecf0f1;
+}
+
+.status-bar {
+    background: white;
+    border-radius: 15px;
+    padding: 15px;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    margin-top: 20px;
+}
+
+.status-text {
+    color: #2c3e50;
+    font-size: 0.9em;
+}
+
+.timestamp {
+    color: #7f8c8d;
+    font-size: 0.85em;
+    margin-top: 5px;
+}
+
+.error-message {
+    background: #ff7675;
+    color: white;
+    padding: 15px;
+    border-radius: 15px;
+    margin-top: 20px;
+    text-align: center;
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+    
+    .dashboard {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+</head>
+<body>
+    <div class="container">
+    <div class="header">
+        <h1>Environmental Monitor</h1>
+        <p>Real-time sensor readings</p>
+    </div>
+
+    <div class="dashboard">
+        <!-- Time and Location Card -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-clock"></i>
+                <span class="card-title">Time & Location</span>
+            </div>
+            <div class="time-location-info">
+                <div class="time-display" id="current-time">--:--:--</div>
+                <div class="date-display" id="current-date">--</div>
+                <div class="location-display">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span id="location-text">Loading location...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Weather Alert Card -->
+        <div class="card" id="weather-alert-card" style="display: none;">
+            <div class="card-header">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span class="card-title">Weather Alert</span>
+            </div>
+            <div class="alert-content" id="weather-alert-content">
+                No active weather alerts
+            </div>
+        </div>
+
+        <!-- Weather Card -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-cloud"></i>
+                <span class="card-title">Local Weather</span>
+            </div>
+            <div class="weather-info">
+                <div class="weather-icon" id="weather-icon">
+                    <i class="fas fa-spinner fa-spin"></i>
+                </div>
+                <div class="weather-description" id="weather-description">Loading...</div>
+                <div class="temp-display">
+                    <div class="temp-unit">
+                        <div class="temp-value" id="weather-temp-c">--</div>
+                        <div class="temp-label">Celsius</div>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="temp-unit">
+                        <div class="temp-value" id="weather-temp-f">--</div>
+                        <div class="temp-label">Fahrenheit</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-calendar-alt"></i>
+                <span class="card-title">3-Day Forecast</span>
+            </div>
+            <div class="forecast-container" id="forecast-container">
+                Loading forecast...
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-sun"></i>
+                <span class="card-title">Sun & Moon</span>
+            </div>
+            <div class="celestial-info">
+                <div class="sun-times">
+                    <div class="celestial-item">
+                        <i class="fas fa-sunrise"></i>
+                        <span id="sunrise-time">--:--</span>
+                    </div>
+                    <div class="celestial-item">
+                        <i class="fas fa-sunset"></i>
+                        <span id="sunset-time">--:--</span>
+                    </div>
+                </div>
+                <div class="moon-phase">
+                    <div id="moon-icon" class="moon-icon">
+                        <i class="fas fa-moon"></i>
+                    </div>
+                    <div id="moon-phase-text">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-wind"></i>
+                <span class="card-title">Air Quality</span>
+            </div>
+            <div class="aqi-container">
+                <div class="aqi-gauge" id="aqi-gauge">
+                    <div class="gauge-value">--</div>
+                    <div class="gauge-label">AQI</div>
+                </div>
+                <div class="aqi-description" id="aqi-description">Loading air quality data...</div>
+            </div>
+        </div>
+
+        <!-- Settings Panel -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-cog"></i>
+                <span class="card-title">Settings</span>
+            </div>
+            <div class="settings-container">
+                <div class="setting-item">
+                    <label>Temperature Unit</label>
+                    <select id="temp-unit" class="setting-select">
+                        <option value="C">Celsius</option>
+                        <option value="F">Fahrenheit</option>
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <label>Time Format</label>
+                    <select id="time-format" class="setting-select">
+                        <option value="12">12-hour</option>
+                        <option value="24">24-hour</option>
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <label>Auto-refresh Interval</label>
+                    <select id="refresh-interval" class="setting-select">
+                        <option value="300000">5 minutes</option>
+                        <option value="600000">10 minutes</option>
+                        <option value="900000">15 minutes</option>
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <label>Dark Mode</label>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="dark-mode-toggle">
+                        <span class="toggle-slider"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Previous cards remain the same -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-thermometer-half"></i>
+                <span class="card-title">Ambient Temperature</span>
+            </div>
+            <div class="temp-display">
+                <div class="temp-unit">
+                    <div class="temp-value" id="temperature-c">--</div>
+                    <div class="temp-label">Celsius</div>
+                </div>
+                <div class="divider"></div>
+                <div class="temp-unit">
+                    <div class="temp-value" id="temperature-f">--</div>
+                    <div class="temp-label">Fahrenheit</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-tint"></i>
+                <span class="card-title">Humidity</span>
+            </div>
+            <div class="humidity-value" id="humidity">--</div>
+            <div class="temp-label" style="text-align: center;">Relative Humidity</div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-microchip"></i>
+                <span class="card-title">CPU Temperature</span>
+            </div>
+            <div class="temp-display">
+                <div class="temp-unit">
+                    <div class="temp-value" id="cpu-temp-c">--</div>
+                    <div class="temp-label">Celsius</div>
+                </div>
+                <div class="divider"></div>
+                <div class="temp-unit">
+                    <div class="temp-value" id="cpu-temp-f">--</div>
+                    <div class="temp-label">Fahrenheit</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-text" id="status">Connecting to database...</div>
+        <div class="timestamp" id="timestamp">--</div>
+    </div>
+
+    <div id="error-message" class="error-message"></div>
+    </div>
+
+    <script>
+        // Replace with your OpenWeatherMap API key
+        const WEATHER_API_KEY = 'a0f7207c9b47b9be6746ed5f4b3c8059';
+
+        // Update time and date
+        function updateDateTime() {
+        const now = new Date();
+
+        // Update time
+        const timeStr = now.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        second: '2-digit'
+        });
+        document.getElementById('current-time').textContent = timeStr;
+
+        // Update date
+        const dateStr = now.toLocaleDateString('en-US', { 
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+        });
+        document.getElementById('current-date').textContent = dateStr;
+        }
+
+        // Start clock update
+        setInterval(updateDateTime, 1000);
+        updateDateTime(); // Initial update
+        
+
+        // Function to get city and state from coordinates
+        async function getCityState(lat, lon) {
+            try {
+            const response = await fetch(
+                `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${WEATHER_API_KEY}`
+            );
+
+            if (!response.ok) throw new Error('Geocoding API error');
+
+            const data = await response.json();
+            if (data && data[0]) {
+                const location = data[0];
+                const city = location.name;
+                const state = location.state;
+                document.getElementById('location-text').textContent = `${city}, ${state}`;
+            }
+            } catch (error) {
+            console.error('Geocoding error:', error);
+            document.getElementById('location-text').textContent = 'Location unavailable';
+            }
+            }
+
+            // Function to handle weather alerts
+            function updateWeatherAlert(alerts) {
+            const alertCard = document.getElementById('weather-alert-card');
+            const alertContent = document.getElementById('weather-alert-content');
+
+            if (alerts && alerts.length > 0) {
+            const alert = alerts[0]; // Show the most recent alert
+
+            let severityClass = 'moderate';
+            if (alert.severity === 'Extreme' || alert.severity === 'Severe') {
+                severityClass = 'severe';
+            } else if (alert.severity === 'Minor') {
+                severityClass = 'minor';
+            }
+
+            alertContent.className = `alert-content ${severityClass}`;
+            alertContent.innerHTML = `
+                <strong>${alert.event}</strong><br>
+                ${alert.description}<br>
+                <small>Until: ${new Date(alert.end * 1000).toLocaleString()}</small>
+            `;
+
+            alertCard.style.display = 'block';
+            } else {
+            alertCard.style.display = 'none';
+            }
+            }
+
+            // Weather icons mapping
+            const weatherIcons = {
+                'Clear': 'fa-sun',
+                'Clouds': 'fa-cloud',
+                'Rain': 'fa-cloud-rain',
+                'Snow': 'fa-snowflake',
+                'Thunderstorm': 'fa-bolt',
+                'Drizzle': 'fa-cloud-rain',
+                'Mist': 'fa-smog',
+                'Smoke': 'fa-smog',
+                'Haze': 'fa-smog',
+                'Dust': 'fa-smog',
+                'Fog': 'fa-smog',
+                'Sand': 'fa-smog',
+                'Ash': 'fa-smog',
+                'Squall': 'fa-wind',
+                'Tornado': 'fa-wind'
+            };
+
+        // Moon phase calculation
+        function getMoonPhase(date) {
+            const phase = date / (29.53 * 24 * 60 * 60 * 1000);
+            return phase - Math.floor(phase);
+            }
+
+            function updateMoonPhase(timestamp) {
+            const phase = getMoonPhase(timestamp);
+            const moonIcon = document.getElementById('moon-icon');
+            const moonText = document.getElementById('moon-phase-text');
+
+            let icon = 'fa-moon';
+            let description = '';
+
+            if (phase < 0.125) {
+            description = 'New Moon';
+            icon = 'fa-moon';
+            } else if (phase < 0.25) {
+            description = 'Waxing Crescent';
+            icon = 'fa-moon';
+            } else if (phase < 0.375) {
+            description = 'First Quarter';
+            icon = 'fa-adjust';
+            } else if (phase < 0.625) {
+            description = 'Full Moon';
+            icon = 'fa-moon';
+            } else if (phase < 0.75) {
+            description = 'Last Quarter';
+            icon = 'fa-adjust fa-flip-horizontal';
+            } else {
+            description = 'Waning Crescent';
+            icon = 'fa-moon';
+            }
+
+            moonIcon.innerHTML = `<i class="fas ${icon}"></i>`;
+            moonText.textContent = description;
+            }
+
+        // AQI color and description
+        function getAQIInfo(aqi) {
+            const aqiRanges = [
+            { max: 50, color: '#00e400', description: 'Good' },
+            { max: 100, color: '#ffff00', description: 'Moderate' },
+            { max: 150, color: '#ff7e00', description: 'Unhealthy for Sensitive Groups' },
+            { max: 200, color: '#ff0000', description: 'Unhealthy' },
+            { max: 300, color: '#99004c', description: 'Very Unhealthy' },
+            { max: 500, color: '#7e0023', description: 'Hazardous' }
+            ];
+
+            for (const range of aqiRanges) {
+            if (aqi <= range.max) {
+                return range;
+            }
+            }
+            return aqiRanges[aqiRanges.length - 1];
+            }
+
+        // Update forecast
+        function updateForecast(forecast) {
+            const container = document.getElementById('forecast-container');
+            container.innerHTML = forecast.slice(1, 4).map(day => {
+            const date = new Date(day.dt * 1000);
+            return `
+                <div class="forecast-day">
+                    <div class="forecast-date">${date.toLocaleDateString('en-US', { weekday: 'short' })}</div>
+                    <div class="forecast-icon">
+                        <i class="fas ${weatherIcons[day.weather[0].main]}"></i>
+                    </div>
+                    <div class="forecast-temp">
+                        ${Math.round(day.temp.day)}°C
+                    </div>
+                </div>
+            `;
+            }).join('');
+            }
+
+        // Settings handlers
+        function initializeSettings() {
+            // Temperature unit preference
+            document.getElementById('temp-unit').addEventListener('change', function(e) {
+            localStorage.setItem('tempUnit', e.target.value);
+            updateDisplays();
+            });
+
+            // Time format preference
+            document.getElementById('time-format').addEventListener('change', function(e) {
+            localStorage.setItem('timeFormat', e.target.value);
+            updateDateTime();
+            });
+
+            // Refresh interval
+            document.getElementById('refresh-interval').addEventListener('change', function(e) {
+            localStorage.setItem('refreshInterval', e.target.value);
+            setupRefreshInterval();
+            });
+
+            // Dark mode toggle
+            document.getElementById('dark-mode-toggle').addEventListener('change', function(e) {
+            document.body.classList.toggle('dark-mode', e.target.checked);
+            localStorage.setItem('darkMode', e.target.checked);
+            });
+
+            // Load saved preferences
+            const tempUnit = localStorage.getItem('tempUnit') || 'C';
+            const timeFormat = localStorage.getItem('timeFormat') || '12';
+            const refreshInterval = localStorage.getItem('refreshInterval') || '300000';
+            const darkMode = localStorage.getItem('darkMode') === 'true';
+
+            document.getElementById('temp-unit').value = tempUnit;
+            document.getElementById('time-format').value = timeFormat;
+            document.getElementById('refresh-interval').value = refreshInterval;
+            document.getElementById('dark-mode-toggle').checked = darkMode;
+            document.body.classList.toggle('dark-mode', darkMode);
+            }
+
+        // Function to setup refresh interval
+        function setupRefreshInterval() {
+            const interval = parseInt(localStorage.getItem('refreshInterval')) || 300000;
+            if (window.refreshTimer) {
+            clearInterval(window.refreshTimer);
+            }
+            window.refreshTimer = setInterval(() => {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        fetchWeatherData(position.coords.latitude, position.coords.longitude);
+                    }
+                );
+            }
+            }, interval);
+            }
+
+        // Enhanced weather data fetch
+        async function fetchWeatherData(lat, lon) {
+            // Get city and state information
+            await getCityState(lat, lon);
+            try {
+                const response = await fetch(
+                    `https://api.openweathermap.org/data/2.5/onecall?lat=${lat}&lon=${lon}&appid=${a0f7207c9b47b9be6746ed5f4b3c8059}&units=metric`
+                    );
+                
+                if (!response.ok) {
+                    throw new Error('Weather API error');
+                }
+
+                const data = await response.json();
+                
+                // Update weather card
+                const tempC = data.current.temp;
+                const tempF = (tempC * 9/5) + 32;
+                
+                document.getElementById('weather-temp-c').textContent = `${tempC.toFixed(1)}°`;
+                document.getElementById('weather-temp-f').textContent = `${tempF.toFixed(1)}°`;
+                
+                const weatherMain = data.current.weather[0].main;
+                const iconClass = weatherIcons[weatherMain] || 'fa-cloud';
+                
+                // Update weather alerts
+                updateWeatherAlert(data.alerts);
+                
+                document.getElementById('weather-icon').innerHTML = 
+                    `<i class="fas ${iconClass}"></i>`;
+                document.getElementById('weather-description').textContent = 
+                    data.weather[0].description;
+                
+            } catch (error) {
+                console.error('Weather API error:', error);
+                document.getElementById('weather-description').textContent = 
+                    'Unable to fetch weather data';
+            }
+        }
+
+        // Get user location and fetch weather
+        function initWeather() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        fetchWeatherData(
+                            position.coords.latitude,
+                            position.coords.longitude
+                        );
+                    },
+                    error => {
+                        console.error('Geolocation error:', error);
+                        document.getElementById('weather-description').textContent = 
+                            'Location access denied';
+                    }
+                );
+            } else {
+                document.getElementById('weather-description').textContent = 
+                    'Geolocation not supported';
+            }
+        }
+
+        // Firebase initialization and sensor data handling
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize weather data
+            initWeather();
+
+            try {
+                const firebaseConfig = {
+                    apiKey: "AIzaSyD3P4c3HTpBIYkbqe_PRwSndGJfNQIZtDg",
+                    authDomain: "raspberrygps-36044.firebaseapp.com",
+                    databaseURL: "https://raspberrygps-36044-default-rtdb.firebaseio.com",
+                    storageBucket: "raspberrygps-36044.appspot.com"
+                };
+
+                firebase.initializeApp(firebaseConfig);
+                const dbRef = firebase.database().ref('sensor_readings');
+
+                dbRef.on('value', function(snapshot) {
+                    try {
+                        const data = snapshot.val();
+                        if (data) {
+                            const latestKey = Object.keys(data)[0];
+                            const latestData = data[latestKey];
+
+                            // Update temperature displays
+                            document.getElementById('temperature-c').textContent = 
+                                `${latestData.temperature_c.toFixed(1)}°`;
+                            document.getElementById('temperature-f').textContent = 
+                                `${latestData.temperature_f.toFixed(1)}°`;
+                            
+                            // Update humidity
+                            document.getElementById('humidity').textContent = 
+                                `${latestData.humidity.toFixed(1)}%`;
+                            
+                            // Update CPU temperature
+                            document.getElementById('cpu-temp-c').textContent = 
+                                `${latestData.cpu_temp_c.toFixed(1)}°`;
+                            document.getElementById('cpu-temp-f').textContent = 
+                                `${latestData.cpu_temp_f.toFixed(1)}°`;
+                            
+                            // Update timestamp
+                            const timestamp = new Date(latestData.timestamp);
+                            document.getElementById('timestamp').textContent = 
+                                `Last updated: ${timestamp.toLocaleString()}`;
+
+                            document.getElementById('status').textContent = 'Connected - Live Data';
+                            document.getElementById('error-message').style.display = 'none';
+                        } else {
+                            document.getElementById('status').textContent = 'Connected - Waiting for data';
+                        }
+                    } catch (error) {
+                        console.error('Error processing data:', error);
+                        showError('Error processing data: ' + error.message);
+                    }
+                }, function(error) {
+                    console.error('Database error:', error);
+                    showError('Database error: ' + error.message);
+                });
+
+            } catch (error) {
+                console.error('Initialization error:', error);
+                showError('Error initializing Firebase: ' + error.message);
+            }
+        });
+
+        function showError(message) {
+            const errorElement = document.getElementById('error-message');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            document.getElementById('status').textContent = 'Error occurred';
+        }
+    </script>
+</body>
+</html>
