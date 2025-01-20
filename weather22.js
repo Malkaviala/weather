@@ -1,82 +1,6 @@
 // Replace with your WeatherAPI.com API key
 const WEATHER_API_KEY = 'd33f8c00c650428d87632621252001';
 
-// Update time and date
-function updateDateTime() {
-    const now = new Date();
-    
-    // Update time
-    const timeStr = now.toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit', 
-        second: '2-digit'
-    });
-    document.getElementById('current-time').textContent = timeStr;
-    
-    // Update date
-    const dateStr = now.toLocaleDateString('en-US', { 
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
-    document.getElementById('current-date').textContent = dateStr;
-}
-
-// Start clock update
-setInterval(updateDateTime, 1000);
-updateDateTime(); // Initial update
-
-// Function to get city and state from coordinates
-async function getCityState(lat, lon) {
-    try {
-        const response = await fetch(
-            `https://api.weatherapi.com/v1/search.json?key=${WEATHER_API_KEY}&q=${lat},${lon}`
-        );
-
-        if (!response.ok) throw new Error('Geocoding API error');
-
-        const data = await response.json();
-        if (data && data[0]) {
-            const location = data[0];
-            const city = location.name;
-            const region = location.region;
-            document.getElementById('location-text').textContent = `${city}, ${region}`;
-        }
-    } catch (error) {
-        console.error('Geocoding error:', error);
-        document.getElementById('location-text').textContent = 'Location unavailable';
-    }
-}
-
-// Function to handle weather alerts
-function updateWeatherAlert(alerts) {
-    const alertCard = document.getElementById('weather-alert-card');
-    const alertContent = document.getElementById('weather-alert-content');
-
-    if (alerts && alerts.length > 0) {
-        const alert = alerts[0]; // Show the most recent alert
-
-        let severityClass = 'moderate';
-        if (alert.severity === 'Extreme' || alert.severity === 'Severe') {
-            severityClass = 'severe';
-        } else if (alert.severity === 'Minor') {
-            severityClass = 'minor';
-        }
-
-        alertContent.className = `alert-content ${severityClass}`;
-        alertContent.innerHTML = `
-            <strong>${alert.event}</strong><br>
-            ${alert.desc}<br>
-            <small>Until: ${alert.effective}</small>
-        `;
-
-        alertCard.style.display = 'block';
-    } else {
-        alertCard.style.display = 'none';
-    }
-}
-
 // Weather icons mapping (using WeatherAPI.com condition codes)
 const weatherIcons = {
     'Sunny': 'fa-sun',
@@ -92,9 +16,70 @@ const weatherIcons = {
     'default': 'fa-cloud'
 };
 
-// Moon phase calculation
+// Update time and date
+function updateDateTime() {
+    const now = new Date();
+    const timeFormat = localStorage.getItem('timeFormat') || '12';
+    
+    // Update time with respect to format preference
+    const timeStr = now.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        second: '2-digit',
+        hour12: timeFormat === '12'
+    });
+    
+    const timeElement = document.getElementById('current-time');
+    if (timeElement) timeElement.textContent = timeStr;
+    
+    // Update date
+    const dateStr = now.toLocaleDateString('en-US', { 
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+    
+    const dateElement = document.getElementById('current-date');
+    if (dateElement) dateElement.textContent = dateStr;
+}
+
+// Start clock update
+let clockInterval = setInterval(updateDateTime, 1000);
+updateDateTime(); // Initial update
+
+// Function to handle weather alerts
+function updateWeatherAlert(alerts) {
+    const alertCard = document.getElementById('weather-alert-card');
+    const alertContent = document.getElementById('weather-alert-content');
+    
+    if (!alertCard || !alertContent) return;
+
+    if (alerts && alerts.length > 0) {
+        const alert = alerts[0]; // Show the most recent alert
+
+        let severityClass = 'moderate';
+        if (alert.severity === 'Extreme' || alert.severity === 'Severe') {
+            severityClass = 'severe';
+        } else if (alert.severity === 'Minor') {
+            severityClass = 'minor';
+        }
+
+        alertContent.className = `alert-content ${severityClass}`;
+        alertContent.innerHTML = `
+            <strong>${alert.event}</strong><br>
+            ${alert.desc}<br>
+            <small>Until: ${new Date(alert.effective).toLocaleString()}</small>
+        `;
+
+        alertCard.style.display = 'block';
+    } else {
+        alertCard.style.display = 'none';
+    }
+}
+
+// Moon phase calculation and display
 function getMoonPhase(moonPhase) {
-    // Convert WeatherAPI.com moon phase string to icon and description
     const phases = {
         'New Moon': { icon: 'fa-moon', description: 'New Moon' },
         'Waxing Crescent': { icon: 'fa-moon', description: 'Waxing Crescent' },
@@ -110,10 +95,12 @@ function getMoonPhase(moonPhase) {
 }
 
 function updateMoonPhase(moonPhase) {
-    const moonInfo = getMoonPhase(moonPhase);
     const moonIcon = document.getElementById('moon-icon');
     const moonText = document.getElementById('moon-phase-text');
+    
+    if (!moonIcon || !moonText) return;
 
+    const moonInfo = getMoonPhase(moonPhase);
     moonIcon.innerHTML = `<i class="fas ${moonInfo.icon}"></i>`;
     moonText.textContent = moonInfo.description;
 }
@@ -137,37 +124,61 @@ function getAQIInfo(aqi) {
     return aqiRanges[aqiRanges.length - 1];
 }
 
-// Enhanced weather data fetch
+// Enhanced weather data fetch with error handling
 async function fetchWeatherData(lat, lon) {
-    await getCityState(lat, lon);
     try {
-        const response = await fetch(
+        // First try to get city/state
+        const cityStateResponse = await fetch(
+            `https://api.weatherapi.com/v1/search.json?key=${WEATHER_API_KEY}&q=${lat},${lon}`
+        );
+        
+        if (!cityStateResponse.ok) {
+            console.error('City/State API Error:', cityStateResponse.status, await cityStateResponse.text());
+            throw new Error(`City/State API error: ${cityStateResponse.status}`);
+        }
+
+        const locationData = await cityStateResponse.json();
+        if (locationData && locationData[0]) {
+            const location = locationData[0];
+            const locationText = document.getElementById('location-text');
+            if (locationText) {
+                locationText.textContent = `${location.name}, ${location.region}`;
+            }
+        }
+
+        // Then fetch weather data
+        const weatherResponse = await fetch(
             `https://api.weatherapi.com/v1/forecast.json?key=${WEATHER_API_KEY}&q=${lat},${lon}&days=4&aqi=yes&alerts=yes`
         );
         
-        if (!response.ok) {
-            throw new Error('Weather API error');
+        if (!weatherResponse.ok) {
+            console.error('Weather API Error:', weatherResponse.status, await weatherResponse.text());
+            throw new Error(`Weather API error: ${weatherResponse.status}`);
         }
 
-        const data = await response.json();
+        const data = await weatherResponse.json();
         
         // Update current weather
-        const tempC = data.current.temp_c;
-        const tempF = data.current.temp_f;
-        
-        document.getElementById('weather-temp-c').textContent = `${tempC.toFixed(1)}°`;
-        document.getElementById('weather-temp-f').textContent = `${tempF.toFixed(1)}°`;
+        const elements = {
+            tempC: document.getElementById('weather-temp-c'),
+            tempF: document.getElementById('weather-temp-f'),
+            weatherIcon: document.getElementById('weather-icon'),
+            weatherDesc: document.getElementById('weather-description')
+        };
+
+        if (elements.tempC) elements.tempC.textContent = `${data.current.temp_c.toFixed(1)}°`;
+        if (elements.tempF) elements.tempF.textContent = `${data.current.temp_f.toFixed(1)}°`;
         
         const condition = data.current.condition.text;
         const iconClass = weatherIcons[condition] || weatherIcons.default;
+        
+        if (elements.weatherIcon) elements.weatherIcon.innerHTML = `<i class="fas ${iconClass}"></i>`;
+        if (elements.weatherDesc) elements.weatherDesc.textContent = condition;
         
         // Update weather alerts if available
         if (data.alerts && data.alerts.alert) {
             updateWeatherAlert(data.alerts.alert);
         }
-        
-        document.getElementById('weather-icon').innerHTML = `<i class="fas ${iconClass}"></i>`;
-        document.getElementById('weather-description').textContent = condition;
         
         // Update forecast
         updateForecast(data.forecast.forecastday);
@@ -179,20 +190,45 @@ async function fetchWeatherData(lat, lon) {
         if (data.current.air_quality) {
             const aqi = Math.round(data.current.air_quality['us-epa-index']);
             const aqiInfo = getAQIInfo(aqi);
-            document.getElementById('aqi-value').textContent = aqi;
-            document.getElementById('aqi-description').textContent = aqiInfo.description;
-            document.getElementById('aqi-indicator').style.backgroundColor = aqiInfo.color;
+            
+            const gaugeValue = document.querySelector('#aqi-gauge .gauge-value');
+            const aqiDescription = document.getElementById('aqi-description');
+            const aqiGauge = document.getElementById('aqi-gauge');
+            
+            if (gaugeValue) gaugeValue.textContent = aqi;
+            if (aqiDescription) aqiDescription.textContent = aqiInfo.description;
+            if (aqiGauge) aqiGauge.style.backgroundColor = aqiInfo.color;
         }
         
+        // Update status
+        const status = document.getElementById('status');
+        if (status) status.textContent = 'Weather data updated successfully';
+        
     } catch (error) {
-        console.error('Weather API error:', error);
-        document.getElementById('weather-description').textContent = 'Unable to fetch weather data';
+        console.error('Detailed error:', error);
+        // Update UI to show error
+        const elements = {
+            weatherDesc: document.getElementById('weather-description'),
+            weatherIcon: document.getElementById('weather-icon'),
+            status: document.getElementById('status'),
+            errorMessage: document.getElementById('error-message')
+        };
+        
+        if (elements.weatherDesc) elements.weatherDesc.textContent = 'Weather data unavailable';
+        if (elements.weatherIcon) elements.weatherIcon.innerHTML = '<i class="fas fa-exclamation-circle"></i>';
+        if (elements.status) elements.status.textContent = 'Error fetching weather data';
+        if (elements.errorMessage) {
+            elements.errorMessage.textContent = `Error: ${error.message}`;
+            elements.errorMessage.style.display = 'block';
+        }
     }
 }
 
-// Update forecast with WeatherAPI.com data structure
+// Update forecast
 function updateForecast(forecast) {
     const container = document.getElementById('forecast-container');
+    if (!container) return;
+
     container.innerHTML = forecast.slice(1).map(day => {
         const date = new Date(day.date);
         return `
@@ -211,41 +247,60 @@ function updateForecast(forecast) {
 
 // Settings handlers
 function initializeSettings() {
+    const elements = {
+        tempUnit: document.getElementById('temp-unit'),
+        timeFormat: document.getElementById('time-format'),
+        refreshInterval: document.getElementById('refresh-interval'),
+        darkMode: document.getElementById('dark-mode-toggle')
+    };
+
     // Temperature unit preference
-    document.getElementById('temp-unit').addEventListener('change', function(e) {
-        localStorage.setItem('tempUnit', e.target.value);
-        updateDisplays();
-    });
+    if (elements.tempUnit) {
+        elements.tempUnit.addEventListener('change', function(e) {
+            localStorage.setItem('tempUnit', e.target.value);
+            updateDisplays();
+        });
+    }
 
     // Time format preference
-    document.getElementById('time-format').addEventListener('change', function(e) {
-        localStorage.setItem('timeFormat', e.target.value);
-        updateDateTime();
-    });
+    if (elements.timeFormat) {
+        elements.timeFormat.addEventListener('change', function(e) {
+            localStorage.setItem('timeFormat', e.target.value);
+            updateDateTime();
+        });
+    }
 
     // Refresh interval
-    document.getElementById('refresh-interval').addEventListener('change', function(e) {
-        localStorage.setItem('refreshInterval', e.target.value);
-        setupRefreshInterval();
-    });
+    if (elements.refreshInterval) {
+        elements.refreshInterval.addEventListener('change', function(e) {
+            localStorage.setItem('refreshInterval', e.target.value);
+            setupRefreshInterval();
+        });
+    }
 
     // Dark mode toggle
-    document.getElementById('dark-mode-toggle').addEventListener('change', function(e) {
-        document.body.classList.toggle('dark-mode', e.target.checked);
-        localStorage.setItem('darkMode', e.target.checked);
-    });
+    if (elements.darkMode) {
+        elements.darkMode.addEventListener('change', function(e) {
+            document.body.classList.toggle('dark-mode', e.target.checked);
+            localStorage.setItem('darkMode', e.target.checked);
+        });
+    }
 
     // Load saved preferences
-    const tempUnit = localStorage.getItem('tempUnit') || 'C';
-    const timeFormat = localStorage.getItem('timeFormat') || '12';
-    const refreshInterval = localStorage.getItem('refreshInterval') || '300000';
-    const darkMode = localStorage.getItem('darkMode') === 'true';
+    const savedPrefs = {
+        tempUnit: localStorage.getItem('tempUnit') || 'C',
+        timeFormat: localStorage.getItem('timeFormat') || '12',
+        refreshInterval: localStorage.getItem('refreshInterval') || '300000',
+        darkMode: localStorage.getItem('darkMode') === 'true'
+    };
 
-    document.getElementById('temp-unit').value = tempUnit;
-    document.getElementById('time-format').value = timeFormat;
-    document.getElementById('refresh-interval').value = refreshInterval;
-    document.getElementById('dark-mode-toggle').checked = darkMode;
-    document.body.classList.toggle('dark-mode', darkMode);
+    // Apply saved preferences
+    if (elements.tempUnit) elements.tempUnit.value = savedPrefs.tempUnit;
+    if (elements.timeFormat) elements.timeFormat.value = savedPrefs.timeFormat;
+    if (elements.refreshInterval) elements.refreshInterval.value = savedPrefs.refreshInterval;
+    if (elements.darkMode) elements.darkMode.checked = savedPrefs.darkMode;
+    
+    document.body.classList.toggle('dark-mode', savedPrefs.darkMode);
 }
 
 // Function to setup refresh interval
@@ -259,6 +314,10 @@ function setupRefreshInterval() {
             navigator.geolocation.getCurrentPosition(
                 position => {
                     fetchWeatherData(position.coords.latitude, position.coords.longitude);
+                },
+                error => {
+                    console.error('Geolocation error:', error);
+                    showError('Unable to get location: ' + error.message);
                 }
             );
         }
@@ -277,11 +336,27 @@ function initWeather() {
             },
             error => {
                 console.error('Geolocation error:', error);
+                showError('Location access denied: ' + error.message);
                 document.getElementById('weather-description').textContent = 'Location access denied';
             }
         );
     } else {
+        showError('Geolocation is not supported by this browser');
         document.getElementById('weather-description').textContent = 'Geolocation not supported';
+    }
+}
+
+function showError(message) {
+    const errorElement = document.getElementById('error-message');
+    const statusElement = document.getElementById('status');
+    
+    if (errorElement) {
+        errorElement.textContent = message;
+        errorElement.style.display = 'block';
+    }
+    
+    if (statusElement) {
+        statusElement.textContent = 'Error occurred';
     }
 }
 
@@ -311,49 +386,73 @@ document.addEventListener('DOMContentLoaded', function() {
                     const latestData = data[latestKey];
 
                     // Update temperature displays
-                    document.getElementById('temperature-c').textContent = 
-                        `${latestData.temperature_c.toFixed(1)}°`;
-                    document.getElementById('temperature-f').textContent = 
-                        `${latestData.temperature_f.toFixed(1)}°`;
-                    
-                    // Update humidity
-                    document.getElementById('humidity').textContent = 
-                        `${latestData.humidity.toFixed(1)}%`;
-                    
-                    // Update CPU temperature
-                    document.getElementById('cpu-temp-c').textContent = 
-                        `${latestData.cpu_temp_c.toFixed(1)}°`;
-                    document.getElementById('cpu-temp-f').textContent = 
-                        `${latestData.cpu_temp_f.toFixed(1)}°`;
-                    
-                    // Update timestamp
-                    const timestamp = new Date(latestData.timestamp);
-                    document.getElementById('timestamp').textContent = 
-                        `Last updated: ${timestamp.toLocaleString()}`;
+                    const elements = {
+                        tempC: document.getElementById('temperature-c'),
+                        tempF: document.getElementById('temperature-f'),
+                        humidity: document.getElementById('humidity'),
+                        cpuTempC: document.getElementById('cpu-temp-c'),
+                        cpuTempF: document.getElementById('cpu-temp-f'),
+                        timestamp: document.getElementById('timestamp'),
+                        status: document.getElementById('status'),
+                        errorMessage: document.getElementById('error-message')
+                    };
 
-                    document.getElementById('status').textContent = 'Connected - Live Data';
-                    document.getElementById('error-message').style.display = 'none';
+                    // Update sensor readings with null checks
+                    if (elements.tempC) elements.tempC.textContent = `${latestData.temperature_c.toFixed(1)}°`;
+                    if (elements.tempF) elements.tempF.textContent = `${latestData.temperature_f.toFixed(1)}°`;
+                    if (elements.humidity) elements.humidity.textContent = `${latestData.humidity.toFixed(1)}%`;
+                    if (elements.cpuTempC) elements.cpuTempC.textContent = `${latestData.cpu_temp_c.toFixed(1)}°`;
+                    if (elements.cpuTempF) elements.cpuTempF.textContent = `${latestData.cpu_temp_f.toFixed(1)}°`;
+
+                    // Update timestamp and status
+                    const timestamp = new Date(latestData.timestamp);
+                    if (elements.timestamp) {
+                        elements.timestamp.textContent = `Last updated: ${timestamp.toLocaleString()}`;
+                    }
+                    if (elements.status) {
+                        elements.status.textContent = 'Connected - Live Data';
+                    }
+                    if (elements.errorMessage) {
+                        elements.errorMessage.style.display = 'none';
+                    }
                 } else {
-                    document.getElementById('status').textContent = 'Connected - Waiting for data';
+                    const statusElement = document.getElementById('status');
+                    if (statusElement) {
+                        statusElement.textContent = 'Connected - Waiting for data';
+                    }
                 }
             } catch (error) {
                 console.error('Error processing data:', error);
-                showError('Error processing data: ' + error.message);
+                showError('Error processing sensor data: ' + error.message);
             }
         }, function(error) {
             console.error('Database error:', error);
-            showError('Database error: ' + error.message);
+            showError('Database connection error: ' + error.message);
         });
 
     } catch (error) {
-        console.error('Initialization error:', error);
-        showError('Error initializing Firebase: ' + error.message);
+        console.error('Firebase initialization error:', error);
+        showError('Error initializing sensor monitoring: ' + error.message);
     }
 });
 
-function showError(message) {
-    const errorElement = document.getElementById('error-message');
-    errorElement.textContent = message;
-    errorElement.style.display = 'block';
-    document.getElementById('status').textContent = 'Error occurred';
+// Function to update all temperature displays based on user preference
+function updateDisplays() {
+    // This function can be implemented if you need to update temperature displays
+    // based on user preference (C/F) after the initial load
+    const tempUnit = localStorage.getItem('tempUnit') || 'C';
+    // Implementation would go here
+}
+
+// Export any functions that need to be accessed from other modules
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        updateDateTime,
+        fetchWeatherData,
+        updateForecast,
+        initializeSettings,
+        setupRefreshInterval,
+        initWeather,
+        showError
+    };
 }
