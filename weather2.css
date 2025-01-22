@@ -402,3 +402,45 @@ body.dark-mode {
         grid-template-columns: 1fr;
     }
 }
+
+.battery-info {
+    padding: 1rem;
+}
+
+.battery-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.battery-item {
+    text-align: center;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+}
+
+.battery-item i {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: #4CAF50;
+}
+
+.battery-label {
+    font-size: 0.9rem;
+    color: #888;
+    margin-bottom: 0.3rem;
+}
+
+.battery-value {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.battery-update {
+    text-align: right;
+    font-size: 0.8rem;
+    color: #888;
+    margin-top: 0.5rem;
+}
