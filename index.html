@@ -33,6 +33,7 @@
             </div>
         </div>
 
+
         <!-- Weather Alert Card -->
         <div class="card" id="weather-alert-card" style="display: none;">
             <div class="card-header">
@@ -204,6 +205,53 @@
         </div>
     </div>
 
+    
+    <!--Battery -->
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-car-battery"></i>
+            <span class="card-title">Truck Battery Status</span>
+        </div>
+        <div class="battery-info">
+            <div class="battery-grid">
+                <div class="battery-item">
+                    <i class="fas fa-bolt"></i>
+                    <div class="battery-label">Voltage</div>
+                    <div class="battery-value" id="battery-voltage">--V</div>
+                </div>
+                <div class="battery-item">
+                    <i class="fas fa-plug"></i>
+                    <div class="battery-label">Current</div>
+                    <div class="battery-value" id="battery-current">--A</div>
+                </div>
+                <div class="battery-item">
+                    <i class="fas fa-flash"></i>
+                    <div class="battery-label">Power</div>
+                    <div class="battery-value" id="battery-power">--W</div>
+                </div>
+                <div class="battery-item">
+                    <i class="fas fa-battery-full"></i>
+                    <div class="battery-label">State of Charge</div>
+                    <div class="battery-value" id="battery-soc">--%</div>
+                </div>
+                <div class="battery-item">
+                    <i class="fas fa-thermometer-half"></i>
+                    <div class="battery-label">Temperature</div>
+                    <div class="battery-value" id="battery-temp">--°C</div>
+                </div>
+                <div class="battery-item">
+                    <i class="fas fa-clock"></i>
+                    <div class="battery-label">Time to Go</div>
+                    <div class="battery-value" id="battery-ttg">--</div>
+                </div>
+            </div>
+            <div class="battery-update">
+                <span>Last Update: </span>
+                <span id="battery-last-update">--</span>
+            </div>
+        </div>
+    </div>
+
     <div class="status-bar">
         <div class="status-text" id="status">Connecting to database...</div>
         <div class="timestamp" id="timestamp">--</div>
@@ -212,6 +260,6 @@
     <div id="error-message" class="error-message"></div>
     </div>
 
-    <script src="weather22.js"></script>
+    <script src="weather23.js"></script>
 </body>
 </html>
