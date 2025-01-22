@@ -456,3 +456,49 @@ if (typeof module !== 'undefined' && module.exports) {
         showError
     };
 }
+// Add this to your existing Firebase configuration
+function updateBatteryData() {
+    const batteryRef = firebase.database().ref('battery_data/latest');
+    batteryRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            // Update battery values
+            document.getElementById('battery-voltage').textContent = `${data.voltage.toFixed(2)}V`;
+            document.getElementById('battery-current').textContent = `${data.current.toFixed(1)}A`;
+            document.getElementById('battery-power').textContent = `${data.power.toFixed(0)}W`;
+            document.getElementById('battery-soc').textContent = `${data.state_of_charge.toFixed(1)}%`;
+            document.getElementById('battery-temp').textContent = `${data.temperature.toFixed(1)}°C`;
+            
+            // Format time to go
+            let ttgText = '∞';
+            if (data.time_to_go >= 0) {
+                const hours = Math.floor(data.time_to_go / 60);
+                const mins = data.time_to_go % 60;
+                ttgText = `${hours}h ${mins}m`;
+            }
+            document.getElementById('battery-ttg').textContent = ttgText;
+
+            // Update timestamp
+            const timestamp = new Date(data.timestamp);
+            document.getElementById('battery-last-update').textContent = timestamp.toLocaleString();
+            
+            // Add visual indicators based on battery state
+            const socElement = document.getElementById('battery-soc');
+            if (data.state_of_charge < 20) {
+                socElement.style.color = '#ff4444';
+            } else if (data.state_of_charge < 50) {
+                socElement.style.color = '#ffaa00';
+            } else {
+                socElement.style.color = '#4CAF50';
+            }
+        }
+    });
+}
+
+// Add this to your initialization code
+document.addEventListener('DOMContentLoaded', function() {
+    // Your existing initialization code...
+    
+    // Initialize battery data updates
+    updateBatteryData();
+});
